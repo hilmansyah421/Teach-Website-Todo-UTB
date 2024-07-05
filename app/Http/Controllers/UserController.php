@@ -38,26 +38,84 @@ class UserController extends Controller
     }
 
     public function storeRegister(Request $request){
-        $value = [
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => bcrypt($request->password),
-            // 'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'group' => 'user',
-        ];
+        ]);
 
-        // dd($value);
-
-        // User::create($value);
-        return redirect('dashboard');
+        return redirect('dashboard')->with('success', 'Registration successful.');
     }
 
     public function profile(){
-
+        $user = Auth::user();
+        return view('user.profile', compact('user'));
     }
 
     public function logout(){
         Auth::logout();
-        return view('user.login');
+        return redirect('/user/login');
+    }
+
+    // CRUD Methods
+    public function index() {
+        $users = User::all();
+        return view('user.index', compact('users'));
+    }
+
+    public function create() {
+        return view('user.create');
+    }
+
+    public function store(Request $request) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User created successfully.');
+    }
+
+    public function show(User $user) {
+        return view('user.show', compact('user'));
+    }
+
+    public function edit(User $user) {
+        return view('user.edit', compact('user'));
+    }
+
+    public function update(Request $request, User $user) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+    }
+
+    public function destroy(User $user) {
+        $user->delete();
+        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
 }

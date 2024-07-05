@@ -25,13 +25,13 @@ Route::get('/about', function () {
     return view('about');
 });
 
-Route::prefix('user')->group(function () {
-    Route::get('/register', [UserController::class, 'register']);
-    Route::get('/login', [UserController::class, 'login'])->name('login');
-    Route::post('/login/auth', [UserController::class, 'loginAuth']);
-    Route::post('/register/store', [UserController::class, 'storeRegister']);
-    Route::post('/logout', [UserController::class, 'logout']);
-});
+Route::resource('users', UserController::class);
+Route::get('user/login', [UserController::class, 'login'])->name('login');
+Route::post('user/login', [UserController::class, 'loginAuth']);
+Route::get('user/register', [UserController::class, 'register']);
+Route::post('user/register', [UserController::class, 'storeRegister']);
+Route::get('user/profile', [UserController::class, 'profile'])->middleware('auth');
+Route::post('user/logout', [UserController::class, 'logout'])->name('logout');
 
 Route::prefix('dashboard')->group(function () {
     Route::get('/', [DashboardController::class, 'index']);
@@ -52,3 +52,5 @@ Route::prefix('todolist')->group(function () {
     Route::post('/store', [TodoListController::class, 'store']);
     Route::post('/update/{id}', [TodoListController::class, 'update']);
 });
+
+Route::resource('todo-categories', 'TodoCategoryController');

@@ -81,9 +81,10 @@ class TodoController extends Controller
      */
     public function edit(string $id)
     {
-        $todo = Todo::find($id);
-        // dd($id, $todo);
-        return view('todo.edit', compact('todo'));
+        $todo = Todo::findOrFail($id);
+        $todocategories = TodoCategory::where('user_id', Auth::user()->id)->get();
+        
+        return view('todo.edit', compact('todo', 'todocategories'));
     }
 
     /**
@@ -93,15 +94,19 @@ class TodoController extends Controller
     {
         // dd($request->all());
 
-        $value = [
-            'todo_category_id' => $request->todo_category_id,
-            'user_id' => Auth::user()->id,
-            'title' => $request->title,
-            'description' => $request->description,
-        ];
-
-        Todo::where('id', $id)->update($value);
-        return redirect('todo');
+        $validatedData = $request->validate([
+            'todo_category_id' => 'required|exists:todo_categories,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+    
+        $todo = Todo::findOrFail($id);
+        $todo->todo_category_id = $request->input('todo_category_id');
+        $todo->title = $request->input('title');
+        $todo->description = $request->input('description');
+        $todo->save();
+    
+        return redirect()->route('todo.index')->with('success', 'Todo updated successfully');
     }
 
     /**
@@ -109,10 +114,9 @@ class TodoController extends Controller
      */
     public function destroy(string $id)
     {
-        $todo = Todo::find($id);
+        $todo = Todo::findOrFail($id);
+    $todo->delete();
 
-        $todo->delete();
-        return redirect('todo');
-
+    return redirect()->route('todo.index')->with('success', 'Todo deleted successfully');
     }
 }
